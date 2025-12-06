@@ -156,6 +156,40 @@ namespace BattleshipGame
             }
             game.LocalPlayer.Ships.Add(ship);
         }
+        private Random rnd = new Random();
+
+        private void AutoPlaceShips()
+        {
+            // очистка поля
+            for (int x = 0; x < 10; x++)
+                for (int y = 0; y < 10; y++)
+                {
+                    game.LocalPlayer.Grid[x, y].State = CellState.Empty;
+                    game.LocalPlayer.Grid[x, y].Ship = null;
+                    playerButtons[x, y].BackColor = Color.LightBlue;
+                }
+            game.LocalPlayer.Ships.Clear();
+            ResetShipsPlaced();
+
+            int[] shipSizes = { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
+            foreach (int size in shipSizes)
+            {
+                bool placed = false;
+                while (!placed)
+                {
+                    int x = rnd.Next(0, 10);
+                    int y = rnd.Next(0, 10);
+                    bool horizontal = rnd.Next(0, 2) == 0;
+                    if (CanPlaceShipPlayer(x, y, size, horizontal ? Orientation.Horizontal : Orientation.Vertical))
+                    {
+                        PlaceShipPlayer(x, y, size, horizontal ? Orientation.Horizontal : Orientation.Vertical);
+                        shipsPlaced[size]++;
+                        placed = true;
+                    }
+                }
+            }
+            RefreshField();
+        }
 
     }
 }

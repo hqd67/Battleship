@@ -190,6 +190,96 @@ namespace BattleshipGame
             }
             RefreshField();
         }
+        private bool playWithBot = false;
+        private List<Point> botAvailableShots = new List<Point>();
+
+        private void StartBotGame()
+        {
+            playWithBot = true;
+            ResetShipsPlaced();
+            InitBotShots();
+            AutoPlaceShips();     // игрок
+            PlaceBotShips();      // бот
+            statusLabel.Text = "Статус: Игра против бота. Ваш ход.";
+        }
+
+        private void InitBotShots()
+        {
+            botAvailableShots.Clear();
+            for (int x = 0; x < 10; x++)
+                for (int y = 0; y < 10; y++)
+                    botAvailableShots.Add(new Point(x, y));
+        }
+
+        private async void EnemyGrid_Click(object sender, EventArgs e)
+        {
+            if (game.State == GameState.GameOver) return;
+
+            Button btn = sender as Button;
+            Point pos = (Point)btn.Tag;
+            int x = pos.X, y = pos.Y;
+
+            var targetCell = game.RemotePlayer.Grid[x, y];
+            if (targetCell.State == CellState.Miss || targetCell.State == CellState.Hit || targetCell.State == CellState.Sunk) return;
+
+            if (playWithBot)
+            {
+                await PlayerShotBot(x, y);
+                return;
+            }
+        }
+
+        // Player vs Bot
+        private async Task PlayerShotBot(int x, int y)
+        {
+            var cell = game.RemotePlayer.Grid[x, y];
+            if (cell.State == CellState.Ship)
+            {
+                cell.State = CellState.Hit;
+                if (cell.Ship.IsSunk) cell.Ship.MarkSunk();
+            }
+            else if (cell.State == CellState.Empty)
+                cell.State = CellState.Miss;
+
+            RefreshField();
+
+            if (game.RemotePlayer.AllShipsSunk())
+            {
+                MessageBox.Show("Вы победили!");
+                ResetGame();
+                return;
+            }
+
+            await Task.Delay(350);
+            BotShot();
+        }
+
+        private void BotShot()
+        {
+            if (botAvailableShots.Count == 0) return;
+            int idx = rnd.Next(botAvailableShots.Count);
+            var p = botAvailableShots[idx];
+            botAvailableShots.RemoveAt(idx);
+
+            var cell = game.LocalPlayer.Grid[p.X, p.Y];
+            if (cell.State == CellState.Ship)
+            {
+                cell.State = CellState.Hit;
+                if (cell.Ship.IsSunk) cell.Ship.MarkSunk();
+            }
+            else cell.State = CellState.Miss;
+
+            RefreshField();
+
+            if (game.LocalPlayer.AllShipsSunk())
+            {
+                MessageBox.Show("Бот победил!");
+                ResetGame();
+                return;
+            }
+
+            statusLabel.Text = "Статус: Ваш ход";
+        }
 
     }
 }

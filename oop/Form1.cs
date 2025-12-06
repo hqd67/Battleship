@@ -83,5 +83,79 @@ namespace BattleshipGame
             statusLabel = new Label { Location = new Point(10, 400), Text = "Статус: Готов", AutoSize = true };
             Controls.Add(statusLabel);
         }
+        private GameManager game = new GameManager();
+        private int selectedShipSize = 4;
+        private Orientation currentOrientation = Orientation.Horizontal;
+        private Dictionary<int, int> shipLimits = new Dictionary<int, int> { { 4, 1 }, { 3, 2 }, { 2, 3 }, { 1, 4 } };
+        private Dictionary<int, int> shipsPlaced = new Dictionary<int, int> { { 4, 0 }, { 3, 0 }, { 2, 0 }, { 1, 0 } };
+
+        private void ResetShipsPlaced()
+        {
+            foreach (var key in shipLimits.Keys)
+                shipsPlaced[key] = 0;
+        }
+
+        private void PlayerGrid_MouseDown(object sender, MouseEventArgs e)
+        {
+            Button btn = sender as Button;
+            Point pos = (Point)btn.Tag;
+            int x = pos.X;
+            int y = pos.Y;
+
+            if (e.Button == MouseButtons.Right)
+            {
+                currentOrientation = currentOrientation == Orientation.Horizontal ? Orientation.Vertical : Orientation.Horizontal;
+                return;
+            }
+
+            if (shipsPlaced[selectedShipSize] >= shipLimits[selectedShipSize])
+            {
+                MessageBox.Show($"Все корабли размера {selectedShipSize} уже размещены");
+                return;
+            }
+
+            if (CanPlaceShipPlayer(x, y, selectedShipSize, currentOrientation))
+            {
+                PlaceShipPlayer(x, y, selectedShipSize, currentOrientation);
+                shipsPlaced[selectedShipSize]++;
+                RefreshField();
+            }
+        }
+
+        private bool CanPlaceShipPlayer(int x, int y, int size, Orientation orientation)
+        {
+            for (int i = 0; i < size; i++)
+            {
+                int cx = x + (orientation == Orientation.Horizontal ? i : 0);
+                int cy = y + (orientation == Orientation.Vertical ? i : 0);
+                if (cx >= 10 || cy >= 10) return false;
+                if (game.LocalPlayer.Grid[cx, cy].State != CellState.Empty) return false;
+                for (int dx = -1; dx <= 1; dx++)
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        int nx = cx + dx, ny = cy + dy;
+                        if (nx >= 0 && ny >= 0 && nx < 10 && ny < 10)
+                            if (game.LocalPlayer.Grid[nx, ny].State == CellState.Ship)
+                                return false;
+                    }
+            }
+            return true;
+        }
+
+        private void PlaceShipPlayer(int x, int y, int size, Orientation orientation)
+        {
+            Ship ship = new Ship { Orientation = orientation };
+            for (int i = 0; i < size; i++)
+            {
+                int cx = x + (orientation == Orientation.Horizontal ? i : 0);
+                int cy = y + (orientation == Orientation.Vertical ? i : 0);
+                var cell = game.LocalPlayer.Grid[cx, cy];
+                cell.State = CellState.Ship;
+                cell.Ship = ship;
+                ship.Cells.Add(cell);
+            }
+            game.LocalPlayer.Ships.Add(ship);
+        }
+
     }
 }

@@ -280,6 +280,24 @@ namespace BattleshipGame
 
             statusLabel.Text = "Статус: Ваш ход";
         }
+        private NetworkManager network = new NetworkManager();
 
+        private async Task StartHost()
+        {
+            if (!int.TryParse(portBox.Text, out int port)) { MessageBox.Show("Некорректный порт"); return; }
+            await network.StartServer(port);
+            statusLabel.Text = "Статус: Клиент подключён (хост)";
+        }
+
+        private async Task StartJoin()
+        {
+            if (!int.TryParse(portBox.Text, out int port)) { MessageBox.Show("Некорректный порт"); return; }
+            await network.ConnectToServer(ipBox.Text.Trim(), port);
+            statusLabel.Text = "Статус: Подключено (клиент)";
+        }
+
+        private void OnNetworkMessage(string json)
+        {
+        }
     }
 }

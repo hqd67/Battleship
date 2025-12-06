@@ -1,53 +1,34 @@
-﻿using System;
-
-namespace BattleshipGame
+﻿namespace BattleshipGame
 {
+    public enum GameState { Placement, Waiting, MyTurn, EnemyTurn, GameOver }
+
     public class GameManager
     {
-        public Player Player1 { get; private set; }
-        public Player Player2 { get; private set; }
+        public Player LocalPlayer { get; set; } = new Player();
+        public Player RemotePlayer { get; set; } = new Player();
+        public GameState State { get; set; } = GameState.Placement;
 
-        public Player CurrentPlayer { get; private set; }
-        public Player OpponentPlayer => CurrentPlayer == Player1 ? Player2 : Player1;
-
-        public GameManager()
+        public void MakeMove(int x, int y)
         {
-            Player1 = new Player();
-            Player2 = new Player();
-            CurrentPlayer = Player1;
+            var targetCell = RemotePlayer.Grid[x, y];
+            if (targetCell.State == CellState.Empty)
+                targetCell.State = CellState.Miss;
+            else if (targetCell.State == CellState.Ship)
+            {
+                targetCell.State = CellState.Hit;
+                if (targetCell.Ship.IsSunk)
+                    targetCell.Ship.MarkSunk();
+            }
         }
 
-        public bool Shoot(int x, int y)
+        public bool CheckWinner()
         {
-            var cell = OpponentPlayer.Board[x, y];
-
-            if (cell.State == CellState.Hit || cell.State == CellState.Miss)
-                return false;
-
-            if (cell.State == CellState.Ship)
+            if (RemotePlayer.AllShipsSunk() || LocalPlayer.AllShipsSunk())
             {
-                cell.State = CellState.Hit;
+                State = GameState.GameOver;
                 return true;
             }
-            else
-            {
-                cell.State = CellState.Miss;
-                EndTurn();
-                return false;
-            }
-        }
-
-        public void EndTurn()
-        {
-            CurrentPlayer = OpponentPlayer;
-        }
-
-        public bool CheckVictory(Player target)
-        {
-            foreach (var ship in target.Ships)
-                if (!ship.IsSunk) return false;
-
-            return true;
+            return false;
         }
     }
 }

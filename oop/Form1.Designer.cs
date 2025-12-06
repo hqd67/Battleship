@@ -1,4 +1,4 @@
-﻿namespace oop
+﻿namespace BattleshipGame
 {
     partial class Form1
     {

@@ -1,24 +1,12 @@
 ﻿namespace BattleshipGame
 {
-    public enum CellState
-    {
-        Empty,
-        Ship,
-        Miss,
-        Hit
-    }
+    public enum CellState { Empty, Ship, Miss, Hit, Sunk }
 
     public class Cell
     {
         public int X { get; set; }
         public int Y { get; set; }
-        public CellState State { get; set; }
-
-        public Cell(int x, int y)
-        {
-            X = x;
-            Y = y;
-            State = CellState.Empty;
-        }
+        public CellState State { get; set; } = CellState.Empty;
+        public Ship Ship { get; set; } = null;
     }
 }
